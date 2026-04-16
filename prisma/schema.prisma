@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BossType {
+  NORMAL
+  QUEST
+  EPIC
+  UNIQUE
+}
+
+enum RespawnRandomMode {
+  PLUS
+  PLUS_MINUS
+}
+
+model Boss {
+  id                   Int               @id @default(autoincrement())
+  name                 String            @unique
+  level                Int
+  bossType             BossType
+  location             String?
+  respawnBaseMinutes   Int
+  respawnRandomMinutes Int               @default(0)
+  respawnRandomMode    RespawnRandomMode @default(PLUS)
+
+  trackedBosses        TrackedBoss[]
+  account              BossAccount?
+}
+
+model TrackedBoss {
+  id            Int       @id @default(autoincrement())
+  bossId        Int
+  scoutNick     String?
+  scoutLogin    String?
+  scoutPassword String?
+  soundEnabled  Boolean   @default(true)
+  lastKillAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  boss          Boss      @relation(fields: [bossId], references: [id], onDelete: Cascade)
+}
+
+enum SoundNotificationMode {
+  NONE
+  RANDOM_WINDOW_START
+  RESPAWN_WINDOW_END
+  BOTH
+}
+
+model Settings {
+  id                   Int      @id @default(1)
+  timezone             String   @default("Europe/Kyiv")
+  showScoutCredentials Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  soundNotificationMode SoundNotificationMode @default(NONE)
+}
+
+model BossTypeSetting {
+  id                   Int               @id @default(autoincrement())
+  bossType             BossType          @unique
+  respawnBaseMinutes   Int
+  respawnRandomMinutes Int               @default(0)
+  respawnRandomMode    RespawnRandomMode @default(PLUS)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model BossAccount {
+  id            Int      @id @default(autoincrement())
+  bossId         Int      @unique
+  boss           Boss     @relation(fields: [bossId], references: [id], onDelete: Cascade)
+  characterName  String
+  login          String
+  password       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
