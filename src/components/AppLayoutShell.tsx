@@ -125,9 +125,9 @@ export function AppLayoutShell({
       <AppShell.Main>{children}</AppShell.Main>
 
       <AppShell.Footer>
-        <Group h="100%" px="md" justify="space-between">
+        <Group h="100%" px="md" justify="center">
           <Text size="sm" c="dimmed">
-            L2 Boss Tracker
+            Developed by imfrozeN © 2026
           </Text>
           <Text size="sm" c="dimmed">
             v0.1
