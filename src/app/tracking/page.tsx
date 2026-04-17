@@ -202,11 +202,11 @@ function getLiveCountdown(respawn?: TrackedBossItem["respawn"]) {
 function getCountdownColor(status: RespawnStatus) {
   switch (status) {
     case "waiting":
-      return "#8a5d00";
+      return "#8a0000";
     case "window":
-      return "#2b6a3f";
+      return "#c99f2a";
     case "expired":
-      return "#c92a2a";
+      return "#2b6a3f";
     default:
       return "#495057";
   }
@@ -215,11 +215,11 @@ function getCountdownColor(status: RespawnStatus) {
 function getCountdownBackground(status: RespawnStatus) {
   switch (status) {
     case "waiting":
-      return "#fff3bf";
+      return "#f8d2d2";
     case "window":
-      return "#ebfbee";
+      return "#ffe5bf";
     case "expired":
-      return "#fff5f5";
+      return "#dcfad2";
     default:
       return "#f1f3f5";
   }
@@ -1274,7 +1274,7 @@ export default function TrackingPage() {
               borderRadius: "6px",
               background: getCountdownBackground(status),
               color: getCountdownColor(status),
-              border: `1px solid ${getCountdownBorder(status)}`,
+              //border: `1px solid ${getCountdownBorder(status)}`,
               fontFamily:
                 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace',
               fontWeight: 600,
