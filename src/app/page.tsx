@@ -532,7 +532,22 @@ async function handleSubmit(e: React.FormEvent) {
       </Table.Td>
 
       <Table.Td>
-        <Badge color={getBossTypeColor(boss.bossType)} variant="light" size="sm">
+        <Badge
+  size="sm"
+  color={getBossTypeColor(boss.bossType)}
+  variant="light"
+  styles={{
+    root: {
+      fontWeight: 600,
+      letterSpacing: "0.2px",
+    },
+    label: {
+      opacity: 1, // 🔥 ключевой фикс
+    },
+  }}
+>
+
+
           {formatBossType(boss.bossType)}
         </Badge>
       </Table.Td>
@@ -889,7 +904,7 @@ async function handleSubmit(e: React.FormEvent) {
                     }}
                   >
                     <Table.Tr>
-                      <Table.Th style={{ width: "42%" }}>
+                      <Table.Th style={{ width: "40%" }}>
                         <Text size="sm" fw={600}>
                           Имя
                         </Text>

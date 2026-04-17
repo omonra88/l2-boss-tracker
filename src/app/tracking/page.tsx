@@ -1245,6 +1245,15 @@ export default function TrackingPage() {
             size="sm"
             color={getBossTypeColor(item.boss.bossType)}
             variant="light"
+            styles={{
+    root: {
+      fontWeight: 600,
+      letterSpacing: "0.2px",
+    },
+    label: {
+      opacity: 1, // 🔥 ключевой фикс
+    },
+  }}
           >
             {formatBossType(item.boss.bossType)}
           </Badge>
@@ -1269,7 +1278,15 @@ export default function TrackingPage() {
         </Table.Td>
 
         <Table.Td>
-          <Badge size="sm" color={getStatusColor(status)} variant="light">
+          <Badge size="sm" color={getStatusColor(status)} variant="light" styles={{
+    root: {
+      fontWeight: 600,
+      letterSpacing: "0.2px",
+    },
+    label: {
+      opacity: 1, // 🔥 ключевой фикс
+    },
+  }}>
             {getStatusLabel(status)}
           </Badge>
         </Table.Td>
@@ -1823,7 +1840,7 @@ export default function TrackingPage() {
                     }}
                   >
                     <Table.Tr>
-                      <Table.Th style={{ width: "32%" }}>
+                      <Table.Th style={{ width: "31%" }}>
                         <Text size="sm" fw={600}>
                           Босс
                         </Text>
@@ -1853,7 +1870,7 @@ export default function TrackingPage() {
                           Конец
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "11%" }}>
+                      <Table.Th style={{ width: "12%" }}>
                         <Text size="sm" fw={600}>
                           Статус
                         </Text>
