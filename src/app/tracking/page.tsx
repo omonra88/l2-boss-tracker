@@ -27,7 +27,7 @@ import {
 import {
   IconEraser,
   IconKey,
-  IconSkull,
+  IconSword,
   IconTrash,
 } from "@tabler/icons-react";
 
@@ -114,7 +114,7 @@ function getBossTypeColor(type: TrackedBossItem["boss"]["bossType"]) {
       return "blue";
     case "NORMAL":
     default:
-      return "gray";
+      return "green";
   }
 }
 
@@ -139,7 +139,7 @@ function getLiveStatus(respawn?: TrackedBossItem["respawn"]) {
 function getStatusLabel(status: RespawnStatus) {
   switch (status) {
     case "waiting":
-      return "Идет респ";
+      return "Мёртв";
     case "window":
       return "В окне респа";
     case "expired":
@@ -152,11 +152,11 @@ function getStatusLabel(status: RespawnStatus) {
 function getStatusColor(status: RespawnStatus) {
   switch (status) {
     case "waiting":
-      return "yellow";
-    case "window":
-      return "green";
-    case "expired":
       return "red";
+    case "window":
+      return "orange";
+    case "expired":
+      return "green";
     default:
       return "gray";
   }
@@ -1113,65 +1113,66 @@ export default function TrackingPage() {
         </Table.Td>
 
         <Table.Td>
-          <Group gap={6} wrap="nowrap" justify="center">
-            <Tooltip label="Отметить босса убитым" withArrow>
-              <ActionIcon
-                type="button"
-                size="md"
-                radius="sm"
-                color="yellow"
-                variant="filled"
-                onClick={() => markAsKilled(item.id)}
-                aria-label="Отметить босса убитым"
-              >
-                <IconSkull size={14} />
-              </ActionIcon>
-            </Tooltip>
+  <Group gap={6} wrap="nowrap" justify="center">
+    <Tooltip label="Отметить босса убитым" withArrow>
+      <ActionIcon
+        type="button"
+        size="md"
+        radius="sm"
+        color="green"
+        variant="light"
+        onClick={() => markAsKilled(item.id)}
+        aria-label="Отметить босса убитым"
+      >
+        <IconSword size={18} />
+      </ActionIcon>
+    </Tooltip>
 
-            <Tooltip label="Очистить данные босса" withArrow>
-              <ActionIcon
-                type="button"
-                size="md"
-                radius="sm"
-                variant="default"
-                onClick={() => openClearOneModal(item)}
-                aria-label="Очистить данные босса"
-              >
-                <IconEraser size={14} />
-              </ActionIcon>
-            </Tooltip>
+    <Tooltip label="Очистить данные босса" withArrow>
+      <ActionIcon
+        type="button"
+        size="md"
+        radius="sm"
+        color="violet"
+        variant="light"
+        onClick={() => openClearOneModal(item)}
+        aria-label="Очистить данные босса"
+      >
+        <IconEraser size={18} />
+      </ActionIcon>
+    </Tooltip>
 
-            {accountsEnabled && (
-              <Tooltip label="Открыть аккаунт босса" withArrow>
-                <ActionIcon
-                  type="button"
-                  size="md"
-                  radius="sm"
-                  color="blue"
-                  variant="light"
-                  onClick={() => openAccountModal(item)}
-                  aria-label="Открыть аккаунт босса"
-                >
-                  <IconKey size={14} />
-                </ActionIcon>
-              </Tooltip>
-            )}
+    {accountsEnabled && (
+      <Tooltip label="Открыть аккаунт босса" withArrow>
+        <ActionIcon
+          type="button"
+          size="md"
+          radius="sm"
+          color="blue"
+          variant="light"
+          onClick={() => openAccountModal(item)}
+          aria-label="Открыть аккаунт босса"
+        >
+          <IconKey size={18} />
+        </ActionIcon>
+      </Tooltip>
+    )}
 
-            <Tooltip label="Удалить из мониторинга" withArrow>
-              <ActionIcon
-                type="button"
-                size="md"
-                radius="sm"
-                color="red"
-                variant="filled"
-                onClick={() => openDeleteModal(item)}
-                aria-label="Удалить из мониторинга"
-              >
-                <IconTrash size={14} />
-              </ActionIcon>
-            </Tooltip>
-          </Group>
-        </Table.Td>
+    <Tooltip label="Удалить из мониторинга" withArrow>
+      <ActionIcon
+        type="button"
+        size="md"
+        radius="sm"
+        color="red"
+        variant="light"
+        onClick={() => openDeleteModal(item)}
+        aria-label="Удалить из мониторинга"
+      >
+        <IconTrash size={18} />
+      </ActionIcon>
+    </Tooltip>
+  </Group>
+</Table.Td>
       </Table.Tr>
     );
   });
@@ -1473,7 +1474,7 @@ export default function TrackingPage() {
                       }
                       data={[
                         { value: "ALL", label: "Все статусы" },
-                        { value: "waiting", label: "Идет респ" },
+                        { value: "waiting", label: "Мёртв" },
                         { value: "window", label: "В окне респа" },
                         { value: "expired", label: "Окно прошло" },
                         { value: "unknown", label: "Не отмечен" },

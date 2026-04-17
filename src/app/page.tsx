@@ -111,7 +111,7 @@ function getBossTypeColor(type: Boss["bossType"]) {
       return "blue";
     case "NORMAL":
     default:
-      return "gray";
+      return "green";
   }
 }
 
@@ -538,11 +538,11 @@ async function handleSubmit(e: React.FormEvent) {
               size="md"
               radius="sm"
               color="green"
-              variant="filled"
+              variant="light"
               onClick={() => addToTracking(boss.id)}
               aria-label="Добавить в мониторинг"
             >
-              <IconEyePlus size={14} />
+              <IconEyePlus size={18} />
             </ActionIcon>
           </Tooltip>
 
@@ -551,7 +551,8 @@ async function handleSubmit(e: React.FormEvent) {
               type="button"
               size="md"
               radius="sm"
-              variant="default"
+              color="orange"
+              variant="light"
               onClick={() => openEditModal(boss)}
               aria-label="Редактировать босса"
             >
@@ -565,11 +566,11 @@ async function handleSubmit(e: React.FormEvent) {
               size="md"
               radius="sm"
               color="red"
-              variant="filled"
+              variant="light"
               onClick={() => openDeleteModal(boss)}
               aria-label="Удалить босса"
             >
-              <IconTrash size={14} />
+              <IconTrash size={18} />
             </ActionIcon>
           </Tooltip>
         </Group>
