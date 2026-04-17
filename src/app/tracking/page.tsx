@@ -204,7 +204,7 @@ function getCountdownColor(status: RespawnStatus) {
     case "waiting":
       return "#8a0000";
     case "window":
-      return "#c99f2a";
+      return "#886402";
     case "expired":
       return "#2b6a3f";
     default:
