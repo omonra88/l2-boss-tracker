@@ -402,6 +402,7 @@ export default function TrackingPage() {
   const soundBlockToastShownRef = useRef(false);
 
   const [filtersOpened, setFiltersOpened] = useState(false);
+  const [nameFilter, setNameFilter] = useState("");
 
   const [deleting, setDeleting] = useState(false);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -577,6 +578,7 @@ export default function TrackingPage() {
   }
 
   function resetFilters() {
+    setNameFilter("");
     setTypeFilter("ALL");
     setStatusFilter("ALL");
     setLevelMinFilter("");
@@ -1133,9 +1135,17 @@ export default function TrackingPage() {
   const filteredAndSortedTracked = useMemo(() => {
     const minLevel = levelMinFilter.trim() ? Number(levelMinFilter) : null;
     const maxLevel = levelMaxFilter.trim() ? Number(levelMaxFilter) : null;
+    const normalizedNameFilter = nameFilter.trim().toLowerCase();
+
 
     const filtered = tracked.filter((item) => {
       const liveStatus = getLiveStatus(item.respawn);
+      if (
+  normalizedNameFilter &&
+  !item.boss.name.toLowerCase().includes(normalizedNameFilter)
+) {
+  return false;
+}
 
       if (typeFilter !== "ALL" && item.boss.bossType !== typeFilter) {
         return false;
@@ -1193,6 +1203,7 @@ export default function TrackingPage() {
     });
   }, [
     tracked,
+    nameFilter,
     typeFilter,
     statusFilter,
     levelMinFilter,
@@ -1674,20 +1685,29 @@ export default function TrackingPage() {
         <Card withBorder radius="md" p="lg">
           <Stack gap="md">
             <Group justify="space-between" align="center">
-              <div>
-                <Title order={4}>Список отслеживания</Title>
-                <Text size="sm" c="dimmed">
-                  Таймеры обновляются автоматически каждую секунду
-                </Text>
-              </div>
+  <div>
+    <Title order={4}>Список отслеживания</Title>
+    <Text size="sm" c="dimmed">
+      Таймеры обновляются автоматически каждую секунду
+    </Text>
+  </div>
 
-              <Button
-                variant={filtersOpened ? "filled" : "default"}
-                onClick={() => setFiltersOpened((prev) => !prev)}
-              >
-                {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
-              </Button>
-            </Group>
+  <Group gap="sm" align="center">
+    <TextInput
+      placeholder="Поиск по имени босса"
+      value={nameFilter}
+      onChange={(e) => setNameFilter(e.currentTarget.value)}
+      w={270}
+    />
+
+    <Button
+      variant={filtersOpened ? "filled" : "default"}
+      onClick={() => setFiltersOpened((prev) => !prev)}
+    >
+      {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
+    </Button>
+  </Group>
+</Group>
 
             {filtersOpened && (
               <Paper withBorder radius="md" p="md">

@@ -150,6 +150,8 @@ export default function HomePage() {
   const [levelMaxFilter, setLevelMaxFilter] = useState("");
   const [sortBy, setSortBy] = useState<BossSort>("level_asc");
 
+  const [nameFilter, setNameFilter] = useState("");
+
   useEffect(() => {
     loadBosses();
 
@@ -240,6 +242,7 @@ export default function HomePage() {
   }
 
   function resetFilters() {
+    setNameFilter("");
     setTypeFilter("ALL");
     setLevelMinFilter("");
     setLevelMaxFilter("");
@@ -457,8 +460,18 @@ async function handleSubmit(e: React.FormEvent) {
   const filteredAndSortedBosses = useMemo(() => {
     const minLevel = levelMinFilter ? Number(levelMinFilter) : null;
     const maxLevel = levelMaxFilter ? Number(levelMaxFilter) : null;
+    const normalizedNameFilter = nameFilter.trim().toLowerCase();
 
     const filtered = bosses.filter((boss) => {
+      if (
+  normalizedNameFilter &&
+  !boss.name.toLowerCase().includes(normalizedNameFilter)
+) {
+  return false;
+}
+
+
+
       if (typeFilter !== "ALL" && boss.bossType !== typeFilter) {
         return false;
       }
@@ -502,7 +515,7 @@ async function handleSubmit(e: React.FormEvent) {
           return 0;
       }
     });
-  }, [bosses, typeFilter, levelMinFilter, levelMaxFilter, sortBy]);
+  }, [bosses, nameFilter, typeFilter, levelMinFilter, levelMaxFilter, sortBy]);
 
   const rows = filteredAndSortedBosses.map((boss) => (
     <Table.Tr key={boss.id}>
@@ -758,20 +771,29 @@ async function handleSubmit(e: React.FormEvent) {
         <Card withBorder radius="md" p="lg">
           <Stack gap="md">
             <Group justify="space-between" align="center">
-              <div>
-                <Title order={4}>Список боссов</Title>
-                <Text size="sm" c="dimmed">
-                  Найдено: {filteredAndSortedBosses.length}
-                </Text>
-              </div>
+  <div>
+    <Title order={4}>Список боссов</Title>
+    <Text size="sm" c="dimmed">
+      Найдено: {filteredAndSortedBosses.length}
+    </Text>
+  </div>
 
-              <Button
-                variant={filtersOpened ? "filled" : "default"}
-                onClick={() => setFiltersOpened((prev) => !prev)}
-              >
-                {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
-              </Button>
-            </Group>
+  <Group gap="sm" align="center">
+    <TextInput
+      placeholder="Поиск по имени босса"
+      value={nameFilter}
+      onChange={(e) => setNameFilter(e.currentTarget.value)}
+      w={270}
+    />
+
+    <Button
+      variant={filtersOpened ? "filled" : "default"}
+      onClick={() => setFiltersOpened((prev) => !prev)}
+    >
+      {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
+    </Button>
+  </Group>
+</Group>
 
             {filtersOpened && (
               <Paper withBorder radius="md" p="md">
