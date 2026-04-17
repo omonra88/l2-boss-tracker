@@ -25,6 +25,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import {
+  IconEdit,
   IconEraser,
   IconKey,
   IconSword,
@@ -276,6 +277,96 @@ function formatCompactDateTime(value: string | null, timezone: string) {
   return `${day}.${month} | ${hour}:${minute}`;
 }
 
+function getTimeZoneOffsetMs(timeZone: string, date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+
+  const parts = formatter.formatToParts(date);
+
+  const year = Number(parts.find((part) => part.type === "year")?.value ?? 0);
+  const month = Number(parts.find((part) => part.type === "month")?.value ?? 1);
+  const day = Number(parts.find((part) => part.type === "day")?.value ?? 1);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? 0);
+  const second = Number(parts.find((part) => part.type === "second")?.value ?? 0);
+
+  const asUtc = Date.UTC(year, month - 1, day, hour, minute, second);
+
+  return asUtc - date.getTime();
+}
+
+function formatDateTimeLocalInTimeZone(value: string | null, timeZone: string) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+
+  const parts = formatter.formatToParts(date);
+
+  const year = parts.find((part) => part.type === "year")?.value ?? "0000";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+function parseDateTimeLocalInTimeZone(value: string, timeZone: string) {
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const [, yearStr, monthStr, dayStr, hourStr, minuteStr] = match;
+
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+
+  const utcGuess = Date.UTC(year, month - 1, day, hour, minute, 0);
+
+  const firstOffset = getTimeZoneOffsetMs(timeZone, new Date(utcGuess));
+  const firstPass = utcGuess - firstOffset;
+
+  const secondOffset = getTimeZoneOffsetMs(timeZone, new Date(firstPass));
+  const finalTs = utcGuess - secondOffset;
+
+  const result = new Date(finalTs);
+
+  if (Number.isNaN(result.getTime())) {
+    return null;
+  }
+
+  return result;
+}
+
 function getTimeForSort(item: TrackedBossItem) {
   const status = getLiveStatus(item.respawn);
 
@@ -315,6 +406,11 @@ export default function TrackingPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<TrackedBossItem | null>(null);
+
+  const [editKillModalOpened, setEditKillModalOpened] = useState(false);
+  const [editingKill, setEditingKill] = useState(false);
+  const [itemToEditKill, setItemToEditKill] = useState<TrackedBossItem | null>(null);
+  const [editKillValue, setEditKillValue] = useState("");
 
   const [clearingOne, setClearingOne] = useState(false);
   const [clearOneModalOpened, setClearOneModalOpened] = useState(false);
@@ -622,6 +718,19 @@ export default function TrackingPage() {
   function closeClearAllModal() {
     if (clearingAll) return;
     setClearAllModalOpened(false);
+  }
+
+   function openEditKillModal(item: TrackedBossItem) {
+    setItemToEditKill(item);
+    setEditKillValue(formatDateTimeLocalInTimeZone(item.lastKillAt, timezone));
+    setEditKillModalOpened(true);
+  }
+
+  function closeEditKillModal() {
+    if (editingKill) return;
+    setEditKillModalOpened(false);
+    setItemToEditKill(null);
+    setEditKillValue("");
   }
 
   function closeAccountModal() {
@@ -954,6 +1063,73 @@ export default function TrackingPage() {
     }
   }
 
+  async function saveManualKillTime() {
+    if (!itemToEditKill) return;
+
+    if (!editKillValue) {
+      notifications.show({
+        title: "Проверь форму",
+        message: "Укажи дату и время убийства",
+        color: "yellow",
+      });
+      return;
+    }
+
+    const parsedDate = parseDateTimeLocalInTimeZone(editKillValue, timezone);
+
+    if (!parsedDate) {
+      notifications.show({
+        title: "Некорректная дата",
+        message: "Не удалось распознать выбранные дату и время",
+        color: "red",
+      });
+      return;
+    }
+
+    setEditingKill(true);
+
+    try {
+      const res = await fetch(`/api/tracked-bosses/${itemToEditKill.id}/kill`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          killTime: parsedDate.toISOString(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        notifications.show({
+          title: "Ошибка",
+          message: data.error || "Не удалось сохранить время убийства",
+          color: "red",
+        });
+        return;
+      }
+
+      notifications.show({
+        title: "Время убийства обновлено",
+        message: itemToEditKill.boss.name,
+        color: "green",
+      });
+
+      closeEditKillModal();
+      await loadTracked(false);
+    } catch (error) {
+      console.error(error);
+      notifications.show({
+        title: "Ошибка",
+        message: "Сетевая ошибка",
+        color: "red",
+      });
+    } finally {
+      setEditingKill(false);
+    }
+  }
+
   const filteredAndSortedTracked = useMemo(() => {
     const minLevel = levelMinFilter.trim() ? Number(levelMinFilter) : null;
     const maxLevel = levelMaxFilter.trim() ? Number(levelMaxFilter) : null;
@@ -1128,6 +1304,20 @@ export default function TrackingPage() {
       </ActionIcon>
     </Tooltip>
 
+    <Tooltip label="Изменить время убийства" withArrow>
+      <ActionIcon
+        type="button"
+        size="md"
+        radius="sm"
+        color="orange"
+        variant="light"
+        onClick={() => openEditKillModal(item)}
+        aria-label="Изменить время убийства"
+      >
+        <IconEdit size={18} />
+      </ActionIcon>
+    </Tooltip>
+
     <Tooltip label="Очистить данные босса" withArrow>
       <ActionIcon
         type="button"
@@ -1195,6 +1385,61 @@ export default function TrackingPage() {
             </Button>
           </Group>
         </Group>
+
+         <Modal
+          opened={editKillModalOpened}
+          onClose={closeEditKillModal}
+          title={<Title order={4}>Изменить время убийства</Title>}
+          centered
+        >
+          <Stack gap="md">
+            <Text size="sm">
+              Укажи дату и время убийства для{" "}
+              <Text span fw={700}>
+                {itemToEditKill?.boss.name ?? ""}
+              </Text>
+              .
+            </Text>
+
+            <TextInput
+              label={`Дата и время (${timezone})`}
+              type="datetime-local"
+              value={editKillValue}
+              onChange={(e) => setEditKillValue(e.currentTarget.value)}
+            />
+
+            <Paper withBorder radius="md" p="md">
+              <Stack gap={6}>
+                <Group justify="space-between">
+                  <Text size="sm" c="dimmed">
+                    Текущее значение
+                  </Text>
+                  <Text size="sm" fw={600}>
+                    {formatCompactDateTime(itemToEditKill?.lastKillAt ?? null, timezone)}
+                  </Text>
+                </Group>
+
+                <Text size="xs" c="dimmed">
+                  После сохранения время будет пересчитано для респа и показано в таблице
+                  в том же часовом поясе.
+                </Text>
+              </Stack>
+            </Paper>
+
+            <Group justify="flex-end">
+              <Button
+                variant="default"
+                onClick={closeEditKillModal}
+                disabled={editingKill}
+              >
+                Отмена
+              </Button>
+              <Button onClick={saveManualKillTime} loading={editingKill}>
+                Сохранить
+              </Button>
+            </Group>
+          </Stack>
+        </Modal>
 
         <Modal
           opened={deleteModalOpened}
