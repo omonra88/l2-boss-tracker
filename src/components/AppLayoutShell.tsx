@@ -20,10 +20,6 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 
-import { ActionIcon } from "@mantine/core";
-import { IconSun, IconMoon } from "@tabler/icons-react";
-import { useThemeMode } from "@/components/ThemeProvider";
-
 const navItems = [
   { label: "Bosses", href: "/", icon: IconHome2 },
   { label: "Tracking", href: "/tracking", icon: IconBell },
@@ -35,7 +31,6 @@ export function AppLayoutShell({
 }: {
   children: React.ReactNode;
 }) {
-  const { colorScheme, toggleColorScheme } = useThemeMode();
   const [opened, setOpened] = useState(false);
   const pathname = usePathname();
 

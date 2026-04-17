@@ -1,15 +1,52 @@
 import type { Metadata } from "next";
+import { ColorSchemeScript, MantineProvider, createTheme } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "./globals.css";
 import { AppLayoutShell } from "@/components/AppLayoutShell";
-import { ColorSchemeScript, ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "L2 Boss Tracker",
   description: "Lineage 2 raid boss tracker",
 };
+
+const theme = createTheme({
+  primaryColor: "blue",
+  defaultRadius: "md",
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  headings: {
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  },
+  colors: {
+    blue: [
+      "#eef6ff",
+      "#d9ebff",
+      "#bfdcff",
+      "#9bc8ff",
+      "#74b1ff",
+      "#549cff",
+      "#3d8dff",
+      "#2d7be6",
+      "#236dcd",
+      "#175db3",
+    ],
+    gray: [
+      "#f8f9fb",
+      "#f1f3f5",
+      "#e9ecef",
+      "#dde1e6",
+      "#ced4da",
+      "#adb5bd",
+      "#868e96",
+      "#5c6770",
+      "#343a40",
+      "#1f2933",
+    ],
+  },
+});
 
 export default function RootLayout({
   children,
@@ -22,14 +59,14 @@ export default function RootLayout({
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
-        <ThemeProvider>
+        <MantineProvider theme={theme} defaultColorScheme="light">
           <Notifications
             position="top-center"
             zIndex={10000}
             autoClose={2500}
           />
           <AppLayoutShell>{children}</AppLayoutShell>
-        </ThemeProvider>
+        </MantineProvider>
       </body>
     </html>
   );
