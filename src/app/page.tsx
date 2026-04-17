@@ -556,7 +556,7 @@ async function handleSubmit(e: React.FormEvent) {
               onClick={() => openEditModal(boss)}
               aria-label="Редактировать босса"
             >
-              <IconEdit size={14} />
+              <IconEdit size={18} />
             </ActionIcon>
           </Tooltip>
 
