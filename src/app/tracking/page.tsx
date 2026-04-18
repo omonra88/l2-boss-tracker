@@ -1848,12 +1848,12 @@ export default function TrackingPage() {
                           Босс
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "5%" }}>
+                      <Table.Th style={{ width: "4%" }}>
                         <Text size="sm" fw={600}>
                           LVL
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "12%" }}>
+                      <Table.Th style={{ width: "13%" }}>
                         <Text size="sm" fw={600}>
                           Тип
                         </Text>
