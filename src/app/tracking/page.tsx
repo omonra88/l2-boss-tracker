@@ -1248,7 +1248,7 @@ export default function TrackingPage() {
             styles={{
     root: {
       fontWeight: 600,
-      letterSpacing: "0.2px",
+      letterSpacing: "1px",
     },
     label: {
       opacity: 1, // 🔥 ключевой фикс
@@ -1281,7 +1281,7 @@ export default function TrackingPage() {
           <Badge size="sm" color={getStatusColor(status)} variant="light" styles={{
     root: {
       fontWeight: 600,
-      letterSpacing: "0.2px",
+      letterSpacing: "1px",
     },
     label: {
       opacity: 1, // 🔥 ключевой фикс
@@ -1850,27 +1850,27 @@ export default function TrackingPage() {
                           LVL
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "10%" }}>
+                      <Table.Th style={{ width: "11%" }}>
                         <Text size="sm" fw={600}>
                           Тип
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "10%" }}>
+                      <Table.Th style={{ width: "8%" }}>
                         <Text size="sm" fw={600}>
                           Килл
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "10%" }}>
+                      <Table.Th style={{ width: "8%" }}>
                         <Text size="sm" fw={600}>
                           Старт
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "10%" }}>
+                      <Table.Th style={{ width: "8%" }}>
                         <Text size="sm" fw={600}>
                           Конец
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "12%" }}>
+                      <Table.Th style={{ width: "13%" }}>
                         <Text size="sm" fw={600}>
                           Статус
                         </Text>

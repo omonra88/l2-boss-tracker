@@ -539,7 +539,7 @@ async function handleSubmit(e: React.FormEvent) {
   styles={{
     root: {
       fontWeight: 600,
-      letterSpacing: "0.2px",
+      letterSpacing: "1px",
     },
     label: {
       opacity: 1, // 🔥 ключевой фикс
