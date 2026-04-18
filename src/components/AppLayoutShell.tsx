@@ -4,19 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AppShell,
+  Box,
   Burger,
+  Button,
+  Container,
+  Divider,
+  Drawer,
   Group,
-  NavLink,
   Stack,
   Text,
   Title,
-  Divider,
-  Box,
 } from "@mantine/core";
 import {
   IconBell,
-  IconSettings,
   IconHome2,
+  IconSettings,
 } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -40,115 +42,116 @@ export function AppLayoutShell({
   }
 
   return (
-    <AppShell
-      padding="lg"
-      navbar={{
-        width: 300,
-        breakpoint: "sm",
-        collapsed: { mobile: !opened },
-      }}
-      header={{ height: 64 }}
-      footer={{ height: 44 }}
-      styles={{
-        main: {
-          background: "#f6f8fb",
-        },
-        header: {
-          background: "#ffffff",
-          borderBottom: "1px solid #e9ecef",
-        },
-        navbar: {
-          background: "#ffffff",
-          borderRight: "1px solid #e9ecef",
-        },
-        footer: {
-          background: "#ffffff",
-          borderTop: "1px solid #e9ecef",
-        },
-      }}
-    >
-      <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Burger
-              opened={opened}
-              onClick={() => setOpened((o) => !o)}
-              hiddenFrom="sm"
-              size="sm"
-            />
-            <Title order={4} c="dark">
-              L2 Boss Tracker
-            </Title>
-          </Group>
-
-          <Group gap="sm">
-  {/* <ActionIcon
-    variant="light"
-    onClick={toggleColorScheme}
-    size="lg"
-    aria-label="Переключить тему"
-  >
-    {colorScheme === "dark" ? (
-      <IconSun size={18} />
-    ) : (
-      <IconMoon size={18} />
-    )}
-  </ActionIcon> */}
-
-  <Text size="sm" c="dimmed">
-    Control panel
-  </Text>
-</Group>
-        </Group>
-      </AppShell.Header>
-
-      <AppShell.Navbar p="md">
-        <Stack gap="md" h="100%">
-          <Box>
-            <Text size="sm" fw={700} c="dimmed">
-              NAVIGATION
-            </Text>
-          </Box>
-
-          <Divider />
-
-          <Stack gap={6}>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <NavLink
-                  key={item.href}
-                  component={Link}
-                  href={item.href}
-                  onClick={() => setOpened(false)}
-                  active={isActive(item.href)}
-                  label={item.label}
-                  leftSection={<Icon size={18} stroke={1.8} />}
-                  styles={{
-                    root: {
-                      borderRadius: 8,
-                    },
-                  }}
+    <>
+      <AppShell
+        padding="lg"
+        header={{ height: 72 }}
+        footer={{ height: 44 }}
+        styles={{
+          main: {
+            background: "#f6f8fb",
+          },
+          header: {
+            background: "#ffffff",
+            borderBottom: "1px solid #e9ecef",
+          },
+          footer: {
+            background: "#ffffff",
+            borderTop: "1px solid #e9ecef",
+          },
+        }}
+      >
+        <AppShell.Header>
+          <Container size="xl" h="100%">
+            <Group h="100%" justify="space-between" align="center">
+              <Group gap="sm">
+                <Burger
+                  opened={opened}
+                  onClick={() => setOpened((o) => !o)}
+                  hiddenFrom="sm"
+                  size="sm"
                 />
-              );
-            })}
-          </Stack>
+                <Box>
+                  <Title order={4} c="dark">
+                    L2 Boss Tracker
+                  </Title>
+                </Box>
+              </Group>
+
+              <Group gap="xs" visibleFrom="sm">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.href);
+
+                  return (
+                    <Button
+                      key={item.href}
+                      component={Link}
+                      href={item.href}
+                      variant={active ? "light" : "subtle"}
+                      leftSection={<Icon size={17} stroke={1.8} />}
+                    >
+                      {item.label}
+                    </Button>
+                  );
+                })}
+              </Group>
+            </Group>
+          </Container>
+        </AppShell.Header>
+
+        <AppShell.Main>{children}</AppShell.Main>
+
+        <AppShell.Footer>
+          <Container size="xl" h="100%">
+            <Group h="100%" justify="center" gap="md">
+              <Text size="sm" c="dimmed">
+                Developed by imfrozeN © 2026
+              </Text>
+              <Text size="sm" c="dimmed">
+                v0.1
+              </Text>
+            </Group>
+          </Container>
+        </AppShell.Footer>
+      </AppShell>
+
+      <Drawer
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title="Navigation"
+        hiddenFrom="sm"
+        padding="md"
+        size="xs"
+      >
+        <Stack gap="xs">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+
+            return (
+              <Button
+                key={item.href}
+                component={Link}
+                href={item.href}
+                onClick={() => setOpened(false)}
+                variant={active ? "light" : "subtle"}
+                justify="flex-start"
+                leftSection={<Icon size={17} stroke={1.8} />}
+                fullWidth
+              >
+                {item.label}
+              </Button>
+            );
+          })}
         </Stack>
-      </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
+        <Divider my="md" />
 
-      <AppShell.Footer>
-        <Group h="100%" px="md" justify="center">
-          <Text size="sm" c="dimmed">
-            Developed by imfrozeN © 2026
-          </Text>
-          <Text size="sm" c="dimmed">
-            v0.1
-          </Text>
-        </Group>
-      </AppShell.Footer>
-    </AppShell>
+        <Text size="sm" c="dimmed">
+          Control panel
+        </Text>
+      </Drawer>
+    </>
   );
 }

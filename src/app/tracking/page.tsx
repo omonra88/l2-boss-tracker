@@ -31,6 +31,7 @@ import {
   IconSword,
   IconTrash,
 } from "@tabler/icons-react";
+import Link from "next/link";
 
 type RespawnStatus = "waiting" | "window" | "expired" | "unknown";
 
@@ -1407,7 +1408,9 @@ export default function TrackingPage() {
             <Text size="sm" c="dimmed">
               Всего: {filteredAndSortedTracked.length}
             </Text>
-
+            <Button color="blue" variant="light"  component={Link} href="/">
+              Добавить босса
+            </Button>
             <Button color="red" variant="light" onClick={openClearAllModal}>
               Очистить всё
             </Button>
