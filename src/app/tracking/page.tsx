@@ -1843,7 +1843,7 @@ export default function TrackingPage() {
                     }}
                   >
                     <Table.Tr>
-                      <Table.Th style={{ width: "31%" }}>
+                      <Table.Th style={{ width: "30%" }}>
                         <Text size="sm" fw={600}>
                           Босс
                         </Text>
@@ -1853,7 +1853,7 @@ export default function TrackingPage() {
                           LVL
                         </Text>
                       </Table.Th>
-                      <Table.Th style={{ width: "11%" }}>
+                      <Table.Th style={{ width: "12%" }}>
                         <Text size="sm" fw={600}>
                           Тип
                         </Text>

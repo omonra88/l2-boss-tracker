@@ -72,9 +72,11 @@ export function AppLayoutShell({
                   size="sm"
                 />
                 <Box>
-                  <Title order={4} c="dark">
-                    L2 Boss Tracker
-                  </Title>
+                  <Link href="/tracking" style={{ textDecoration: "none" }}>
+  <Title order={4} c="dark">
+    L2 Boss Tracker
+  </Title>
+</Link>
                 </Box>
               </Group>
 
