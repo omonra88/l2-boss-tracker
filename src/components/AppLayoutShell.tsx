@@ -27,8 +27,8 @@ import { IconAdrenaline } from "@/components/IconAdrenaline";
 
 const navItems = [
   { label: "Bosses", href: "/", icon: IconHome2 },
-  { label: "Tracking", href: "/tracking", icon: IconBell },
-  { label: "Adr Tracking", href: "/adrtracking", icon: IconAdrenaline },
+  { label: "Manual tracking", href: "/tracking", icon: IconBell },
+  { label: "Bot Tracking", href: "/adrtracking", icon: IconAdrenaline },
   { label: "Settings", href: "/settings", icon: IconSettings },
  
 ];
