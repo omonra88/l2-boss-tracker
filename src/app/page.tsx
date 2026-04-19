@@ -28,6 +28,8 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 
+import { Suspense } from "react";
+
 type Boss = {
   id: number;
   name: string;
@@ -131,7 +133,7 @@ function getRespawnSortValue(boss: Boss) {
   return boss.respawnBaseMinutes + boss.respawnRandomMinutes;
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const [bosses, setBosses] = useState<Boss[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -981,5 +983,13 @@ async function handleSubmit(e: React.FormEvent) {
         </Card>
       </Stack>
     </Container>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageContent />
+    </Suspense>
   );
 }
