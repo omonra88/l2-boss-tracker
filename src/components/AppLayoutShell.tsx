@@ -26,10 +26,10 @@ import { useState } from "react";
 import { IconAdrenaline } from "@/components/IconAdrenaline";
 
 const navItems = [
-  { label: "Bosses", href: "/", icon: IconHome2 },
-  { label: "Manual tracking", href: "/tracking", icon: IconBell },
-  { label: "Bot Tracking", href: "/adrtracking", icon: IconAdrenaline },
-  { label: "Settings", href: "/settings", icon: IconSettings },
+  { label: "Боссы", href: "/", icon: IconHome2 },
+  { label: "Ручной треккинг", href: "/tracking", icon: IconBell },
+  { label: "Бот треккинг", href: "/adrtracking", icon: IconAdrenaline },
+  { label: "Настройки", href: "/settings", icon: IconSettings },
  
 ];
 
