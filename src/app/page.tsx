@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import {
@@ -152,6 +152,9 @@ export default function HomePage() {
 
   const [nameFilter, setNameFilter] = useState("");
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     loadBosses();
 
@@ -159,12 +162,50 @@ export default function HomePage() {
       loadBosses();
     };
 
+    
+
     window.addEventListener("bosses-updated", handler);
 
     return () => {
       window.removeEventListener("bosses-updated", handler);
     };
   }, []);
+
+  useEffect(() => {
+  const shouldOpenAddBoss = searchParams.get("openAddBoss");
+  const bossNameFromQuery = searchParams.get("bossName");
+
+  if (shouldOpenAddBoss !== "1") return;
+
+  setModalOpened(true);
+
+  if (bossNameFromQuery) {
+    setForm((prev) => ({
+      ...prev,
+      name: bossNameFromQuery,
+    }));
+  }
+
+  router.replace("/", { scroll: false });
+}, [searchParams, router]);
+
+useEffect(() => {
+  const shouldOpenEditBoss = searchParams.get("openEditBoss");
+  const bossIdFromQuery = searchParams.get("bossId");
+
+  if (shouldOpenEditBoss !== "1" || !bossIdFromQuery) return;
+
+  const bossId = Number(bossIdFromQuery);
+
+  if (!Number.isInteger(bossId)) return;
+
+  const bossToEdit = bosses.find((boss) => boss.id === bossId);
+
+  if (!bossToEdit) return;
+
+  openEditModal(bossToEdit);
+  router.replace("/", { scroll: false });
+}, [searchParams, router, bosses]);
 
   async function loadBosses(showRefreshToast = false) {
     try {

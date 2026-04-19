@@ -19,13 +19,18 @@ import {
   IconBell,
   IconHome2,
   IconSettings,
+  IconRobot,
 } from "@tabler/icons-react";
 import { useState } from "react";
+
+import { IconAdrenaline } from "@/components/IconAdrenaline";
 
 const navItems = [
   { label: "Bosses", href: "/", icon: IconHome2 },
   { label: "Tracking", href: "/tracking", icon: IconBell },
+  { label: "Adr Tracking", href: "/adrtracking", icon: IconAdrenaline },
   { label: "Settings", href: "/settings", icon: IconSettings },
+ 
 ];
 
 export function AppLayoutShell({
