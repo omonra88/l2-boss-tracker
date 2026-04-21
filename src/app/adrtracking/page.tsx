@@ -1900,12 +1900,7 @@ export default function TrackingPage() {
                     width: "100%",
                   }}
                 >
-                  <Table.Thead
-                    style={{
-                      background: "#f8f9fa",
-                      borderBottom: "2px solid #dee2e6",
-                    }}
-                  >
+                  <Table.Thead>
                     <Table.Tr>
                       <Table.Th style={{ width: "30%" }}>
                         <Text size="sm" fw={600}>

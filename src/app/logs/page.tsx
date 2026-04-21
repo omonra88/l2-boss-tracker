@@ -352,12 +352,7 @@ export default function LogsPage() {
                   verticalSpacing="xs"
                   style={{ tableLayout: "auto", fontSize: "13px", width: "100%" }}
                 >
-                  <Table.Thead
-                    style={{
-                      background: "#f8f9fa",
-                      borderBottom: "2px solid #dee2e6",
-                    }}
-                  >
+                  <Table.Thead>
                     <Table.Tr>
                       <Table.Th style={{ width: "5%" }}>
                         <Text size="sm" fw={600}>#</Text>

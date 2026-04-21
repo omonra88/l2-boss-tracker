@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AppShell,
+  ActionIcon,
   Box,
   Burger,
   Button,
@@ -14,7 +15,11 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
+  useComputedColorScheme,
+  useMantineColorScheme,
 } from "@mantine/core";
+
 import {
   IconBell,
   IconHome2,
@@ -24,6 +29,8 @@ import {
   IconListCheck,
   IconEye,
   IconCalendarEvent,
+  IconSun,
+  IconMoon,
 } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -36,6 +43,36 @@ const navItems = [
   { label: "Лог событий ", href: "/logs", icon: IconCalendarEvent },
   { label: "Настройки", href: "/settings", icon: IconSettings },
 ];
+
+function ColorSchemeToggle() {
+  const { setColorScheme } = useMantineColorScheme();
+  const computedColorScheme = useComputedColorScheme("light", {
+    getInitialValueInEffect: true,
+  });
+
+  return (
+    <Tooltip
+      label={computedColorScheme === "dark" ? "Светлая тема" : "Тёмная тема"}
+      withArrow
+    >
+      <ActionIcon
+        variant="default"
+        size="lg"
+        radius="md"
+        aria-label="Переключить тему"
+        onClick={() =>
+          setColorScheme(computedColorScheme === "dark" ? "light" : "dark")
+        }
+      >
+        {computedColorScheme === "dark" ? (
+          <IconSun size={18} stroke={1.8} />
+        ) : (
+          <IconMoon size={18} stroke={1.8} />
+        )}
+      </ActionIcon>
+    </Tooltip>
+  );
+}
 
 export function AppLayoutShell({
   children,
@@ -56,19 +93,6 @@ export function AppLayoutShell({
         padding="lg"
         header={{ height: 72 }}
         footer={{ height: 44 }}
-        styles={{
-          main: {
-            background: "#f6f8fb",
-          },
-          header: {
-            background: "#ffffff",
-            borderBottom: "1px solid #e9ecef",
-          },
-          footer: {
-            background: "#ffffff",
-            borderTop: "1px solid #e9ecef",
-          },
-        }}
       >
         <AppShell.Header>
           <Container size="xl" h="100%">
@@ -82,7 +106,7 @@ export function AppLayoutShell({
                 />
                 <Box>
                   <Link href="/tracking" style={{ textDecoration: "none" }}>
-                    <Title order={4} c="dark">
+                    <Title order={4}>
                       L2 Boss Tracker
                     </Title>
                   </Link>
@@ -106,6 +130,8 @@ export function AppLayoutShell({
                     </Button>
                   );
                 })}
+
+                <ColorSchemeToggle />
               </Group>
             </Group>
           </Container>
@@ -155,6 +181,8 @@ export function AppLayoutShell({
               </Button>
             );
           })}
+
+          <ColorSchemeToggle />
         </Stack>
 
         <Divider my="md" />
