@@ -19,7 +19,7 @@ import {
   IconBell,
   IconHome2,
   IconSettings,
-  IconRobot,
+  IconList,
 } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -29,8 +29,8 @@ const navItems = [
   { label: "Боссы", href: "/", icon: IconHome2 },
   { label: "Ручной треккинг", href: "/tracking", icon: IconBell },
   { label: "Бот треккинг", href: "/adrtracking", icon: IconAdrenaline },
+  { label: "Логи", href: "/logs", icon: IconList },
   { label: "Настройки", href: "/settings", icon: IconSettings },
- 
 ];
 
 export function AppLayoutShell({
@@ -78,10 +78,10 @@ export function AppLayoutShell({
                 />
                 <Box>
                   <Link href="/tracking" style={{ textDecoration: "none" }}>
-  <Title order={4} c="dark">
-    L2 Boss Tracker
-  </Title>
-</Link>
+                    <Title order={4} c="dark">
+                      L2 Boss Tracker
+                    </Title>
+                  </Link>
                 </Box>
               </Group>
 
