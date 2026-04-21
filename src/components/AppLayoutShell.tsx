@@ -20,16 +20,20 @@ import {
   IconHome2,
   IconSettings,
   IconList,
+  IconHandClick,
+  IconListCheck,
+  IconEye,
+  IconCalendarEvent,
 } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { IconAdrenaline } from "@/components/IconAdrenaline";
 
 const navItems = [
-  { label: "Боссы", href: "/", icon: IconHome2 },
-  { label: "Ручной треккинг", href: "/tracking", icon: IconBell },
-  { label: "Бот треккинг", href: "/adrtracking", icon: IconAdrenaline },
-  { label: "Логи", href: "/logs", icon: IconList },
+  { label: "Список боссов", href: "/", icon: IconListCheck },
+  { label: "Ручной треккинг", href: "/tracking", icon:  IconHandClick },
+  { label: "Авто треккинг", href: "/adrtracking", icon: IconEye },
+  { label: "Лог событий ", href: "/logs", icon: IconCalendarEvent },
   { label: "Настройки", href: "/settings", icon: IconSettings },
 ];
 

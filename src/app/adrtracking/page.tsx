@@ -456,8 +456,19 @@ export default function TrackingPage() {
   const soundUnlockedRef = useRef(false);
   const soundBlockToastShownRef = useRef(false);
 
-  const [filtersOpened, setFiltersOpened] = useState(false);
-  const [nameFilter, setNameFilter] = useState("");
+  // ── filter state: читаем из localStorage при инициализации,
+  //    пишем только по кнопке "Сохранить фильтры" ─────────────
+  function readLS<T>(key: string, fallback: T): T {
+    if (typeof window === "undefined") return fallback;
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) return JSON.parse(stored) as T;
+    } catch { /* ignore */ }
+    return fallback;
+  }
+
+  const [filtersOpened, setFiltersOpened] = useState<boolean>(false);
+  const [nameFilter, setNameFilter] = useState<string>("");
 
   const [deleting, setDeleting] = useState(false);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -487,13 +498,21 @@ export default function TrackingPage() {
     null
   );
 
-  const [typeFilter, setTypeFilter] = useState<
-    "ALL" | TrackedBossItem["boss"]["bossType"]
-  >("ALL");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | RespawnStatus>("ALL");
-  const [levelMinFilter, setLevelMinFilter] = useState("");
-  const [levelMaxFilter, setLevelMaxFilter] = useState("");
-  const [sortBy, setSortBy] = useState<TrackingSort>("status");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | TrackedBossItem["boss"]["bossType"]>(() => readLS("adrtracking:typeFilter", "ALL"));
+  const [statusFilter, setStatusFilter] = useState<"ALL" | RespawnStatus>(() => readLS("adrtracking:statusFilter", "ALL"));
+  const [levelMinFilter, setLevelMinFilter] = useState<string>(() => readLS("adrtracking:levelMinFilter", ""));
+  const [levelMaxFilter, setLevelMaxFilter] = useState<string>(() => readLS("adrtracking:levelMaxFilter", ""));
+  const [sortBy, setSortBy] = useState<TrackingSort>(() => readLS("adrtracking:sortBy", "status"));
+
+  function saveFilters() {
+    try {
+      localStorage.setItem("adrtracking:typeFilter", JSON.stringify(typeFilter));
+      localStorage.setItem("adrtracking:statusFilter", JSON.stringify(statusFilter));
+      localStorage.setItem("adrtracking:levelMinFilter", JSON.stringify(levelMinFilter));
+      localStorage.setItem("adrtracking:levelMaxFilter", JSON.stringify(levelMaxFilter));
+      localStorage.setItem("adrtracking:sortBy", JSON.stringify(sortBy));
+    } catch { /* ignore */ }
+  }
 
   function ensureAudioObject() {
     if (typeof window === "undefined") return null;
@@ -1764,9 +1783,12 @@ export default function TrackingPage() {
 
     <Button
       variant={filtersOpened ? "filled" : "default"}
-      onClick={() => setFiltersOpened((prev) => !prev)}
+      onClick={() => setFiltersOpened(!filtersOpened)}
     >
       {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
+    </Button>
+    <Button variant="default" onClick={resetFilters}>
+      Сбросить фильтры
     </Button>
   </Group>
 </Group>
@@ -1841,8 +1863,8 @@ export default function TrackingPage() {
                   </Group>
 
                   <Group justify="flex-end">
-                    <Button variant="default" onClick={resetFilters}>
-                      Сбросить фильтры
+                    <Button variant="filled" color="blue" onClick={saveFilters}>
+                      Сохранить фильтры
                     </Button>
                   </Group>
                 </Stack>

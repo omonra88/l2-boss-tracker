@@ -146,13 +146,32 @@ function HomePageContent() {
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [bossToDelete, setBossToDelete] = useState<Boss | null>(null);
 
-  const [filtersOpened, setFiltersOpened] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<"ALL" | Boss["bossType"]>("ALL");
-  const [levelMinFilter, setLevelMinFilter] = useState("");
-  const [levelMaxFilter, setLevelMaxFilter] = useState("");
-  const [sortBy, setSortBy] = useState<BossSort>("level_asc");
+  // ── filter state: читаем из localStorage при инициализации,
+  //    пишем только по кнопке "Сохранить фильтры" ─────────────
+  function readLS<T>(key: string, fallback: T): T {
+    if (typeof window === "undefined") return fallback;
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) return JSON.parse(stored) as T;
+    } catch { /* ignore */ }
+    return fallback;
+  }
 
-  const [nameFilter, setNameFilter] = useState("");
+  const [filtersOpened, setFiltersOpened] = useState<boolean>(false);
+  const [typeFilter, setTypeFilter] = useState<"ALL" | Boss["bossType"]>(() => readLS("bosses:typeFilter", "ALL"));
+  const [levelMinFilter, setLevelMinFilter] = useState<string>(() => readLS("bosses:levelMinFilter", ""));
+  const [levelMaxFilter, setLevelMaxFilter] = useState<string>(() => readLS("bosses:levelMaxFilter", ""));
+  const [sortBy, setSortBy] = useState<BossSort>(() => readLS("bosses:sortBy", "level_asc"));
+  const [nameFilter, setNameFilter] = useState<string>("");
+
+  function saveFilters() {
+    try {
+      localStorage.setItem("bosses:typeFilter", JSON.stringify(typeFilter));
+      localStorage.setItem("bosses:levelMinFilter", JSON.stringify(levelMinFilter));
+      localStorage.setItem("bosses:levelMaxFilter", JSON.stringify(levelMaxFilter));
+      localStorage.setItem("bosses:sortBy", JSON.stringify(sortBy));
+    } catch { /* ignore */ }
+  }
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -846,9 +865,12 @@ async function handleSubmit(e: React.FormEvent) {
 
     <Button
       variant={filtersOpened ? "filled" : "default"}
-      onClick={() => setFiltersOpened((prev) => !prev)}
+      onClick={() => setFiltersOpened(!filtersOpened)}
     >
       {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
+    </Button>
+    <Button variant="default" onClick={resetFilters}>
+      Сбросить фильтры
     </Button>
   </Group>
 </Group>
@@ -904,8 +926,8 @@ async function handleSubmit(e: React.FormEvent) {
                   </Group>
 
                   <Group justify="flex-end">
-                    <Button variant="default" onClick={resetFilters}>
-                      Сбросить фильтры
+                    <Button variant="filled" color="blue" onClick={saveFilters}>
+                      Сохранить фильтры
                     </Button>
                   </Group>
                 </Stack>
