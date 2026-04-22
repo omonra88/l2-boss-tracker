@@ -1417,8 +1417,8 @@ export default function TrackingPage() {
               width: "100%",
               padding: "4px 8px",
               borderRadius: "6px",
-              background: getCountdownBackground(status),
-              color: getCountdownColor(status),
+              background: item.adrState === "RESPAWNED" ? "#dcfad2" : getCountdownBackground(status),
+              color: item.adrState === "RESPAWNED" ? "#2b6a3f" : getCountdownColor(status),
               //border: `1px solid ${getCountdownBorder(status)}`,
               fontFamily:
                 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace',
