@@ -162,8 +162,8 @@ function getAdrLinkIndicator(item: TrackedBossItem) {
     return {
       color: "yellow" as const,
       tooltip:
-      "У босса не настроен респавн. Нажми, чтобы открыть редактирование и исправить это.",
-    href: `/?openEditBoss=1&bossId=${item.boss.id}`,
+        "У босса не настроен респавн. Нажми, чтобы открыть редактирование и исправить это.",
+      href: `/?openEditBoss=1&bossId=${item.boss.id}`,
     };
   }
 
@@ -449,6 +449,9 @@ export default function TrackingPage() {
   const [soundNotificationMode, setSoundNotificationMode] =
     useState<SoundNotificationMode>("NONE");
 
+  // --- Scanner status ---
+  const [scannerOnline, setScannerOnline] = useState<boolean | null>(null);
+
   const previousStatusesRef = useRef<Record<number, RespawnStatus>>({});
   const initializedStatusesRef = useRef(false);
 
@@ -456,8 +459,6 @@ export default function TrackingPage() {
   const soundUnlockedRef = useRef(false);
   const soundBlockToastShownRef = useRef(false);
 
-  // ── filter state: читаем из localStorage при инициализации,
-  //    пишем только по кнопке "Сохранить фильтры" ─────────────
   function readLS<T>(key: string, fallback: T): T {
     if (typeof window === "undefined") return fallback;
     try {
@@ -494,9 +495,7 @@ export default function TrackingPage() {
     useState<TrackedBossItem["boss"] | null>(null);
   const [accountForm, setAccountForm] =
     useState<BossAccountForm>(initialAccountForm);
-  const [existingAccount, setExistingAccount] = useState<BossAccount | null>(
-    null
-  );
+  const [existingAccount, setExistingAccount] = useState<BossAccount | null>(null);
 
   const [typeFilter, setTypeFilter] = useState<"ALL" | TrackedBossItem["boss"]["bossType"]>(() => readLS("adrtracking:typeFilter", "ALL"));
   const [statusFilter, setStatusFilter] = useState<"ALL" | RespawnStatus>(() => readLS("adrtracking:statusFilter", "ALL"));
@@ -623,39 +622,40 @@ export default function TrackingPage() {
       setLoading(false);
     }
   }
+
   async function removeAdrBoss(id: number, bossName: string) {
-  try {
-    const res = await fetch(`/api/adrtracking/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/adrtracking/${id}`, {
+        method: "DELETE",
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
+      if (!res.ok) {
+        notifications.show({
+          title: "Ошибка",
+          message: data.error || "Не удалось удалить ADR босса",
+          color: "red",
+        });
+        return;
+      }
+
+      setTracked((prev) => prev.filter((item) => item.id !== id));
+
+      notifications.show({
+        title: "Удалено",
+        message: `Босс удалён из ADR списка: ${bossName}`,
+        color: "green",
+      });
+    } catch (error) {
+      console.error(error);
       notifications.show({
         title: "Ошибка",
-        message: data.error || "Не удалось удалить ADR босса",
+        message: "Сетевая ошибка при удалении",
         color: "red",
       });
-      return;
     }
-
-    setTracked((prev) => prev.filter((item) => item.id !== id));
-
-    notifications.show({
-      title: "Удалено",
-      message: `Босс удалён из ADR списка: ${bossName}`,
-      color: "green",
-    });
-  } catch (error) {
-    console.error(error);
-    notifications.show({
-      title: "Ошибка",
-      message: "Сетевая ошибка при удалении",
-      color: "red",
-    });
   }
-}
 
   async function loadSettings() {
     try {
@@ -684,6 +684,16 @@ export default function TrackingPage() {
     }
   }
 
+  async function loadScannerStatus() {
+    try {
+      const res = await fetch("/api/scanner/status", { cache: "no-store" });
+      const data = await res.json();
+      setScannerOnline(data.online ?? false);
+    } catch {
+      setScannerOnline(false);
+    }
+  }
+
   function resetFilters() {
     setNameFilter("");
     setTypeFilter("ALL");
@@ -696,6 +706,7 @@ export default function TrackingPage() {
   useEffect(() => {
     void loadTracked(false);
     void loadSettings();
+    void loadScannerStatus();
   }, []);
 
   useEffect(() => {
@@ -720,6 +731,15 @@ export default function TrackingPage() {
     }, 3000);
 
     return () => clearInterval(trackedInterval);
+  }, []);
+
+  // Обновляем статус сканера каждые 15 секунд
+  useEffect(() => {
+    const scannerInterval = window.setInterval(() => {
+      void loadScannerStatus();
+    }, 15000);
+
+    return () => clearInterval(scannerInterval);
   }, []);
 
   useEffect(() => {
@@ -829,7 +849,7 @@ export default function TrackingPage() {
     setClearAllModalOpened(false);
   }
 
-   function openEditKillModal(item: TrackedBossItem) {
+  function openEditKillModal(item: TrackedBossItem) {
     setItemToEditKill(item);
     setEditKillValue(formatDateTimeLocalInTimeZone(item.lastKillAt, timezone));
     setEditKillModalOpened(true);
@@ -904,29 +924,17 @@ export default function TrackingPage() {
     if (!selectedBossForAccount) return;
 
     if (!accountForm.characterName.trim()) {
-      notifications.show({
-        title: "Проверь форму",
-        message: "Укажи ник персонажа",
-        color: "yellow",
-      });
+      notifications.show({ title: "Проверь форму", message: "Укажи ник персонажа", color: "yellow" });
       return;
     }
 
     if (!accountForm.login.trim()) {
-      notifications.show({
-        title: "Проверь форму",
-        message: "Укажи логин",
-        color: "yellow",
-      });
+      notifications.show({ title: "Проверь форму", message: "Укажи логин", color: "yellow" });
       return;
     }
 
     if (!accountForm.password.trim()) {
-      notifications.show({
-        title: "Проверь форму",
-        message: "Укажи пароль",
-        color: "yellow",
-      });
+      notifications.show({ title: "Проверь форму", message: "Укажи пароль", color: "yellow" });
       return;
     }
 
@@ -935,9 +943,7 @@ export default function TrackingPage() {
     try {
       const res = await fetch(`/api/boss-accounts/${selectedBossForAccount.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(accountForm),
       });
 
@@ -961,11 +967,7 @@ export default function TrackingPage() {
       });
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     } finally {
       setAccountSaving(false);
     }
@@ -1002,11 +1004,7 @@ export default function TrackingPage() {
       });
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     } finally {
       setAccountDeleting(false);
     }
@@ -1044,11 +1042,7 @@ export default function TrackingPage() {
       closeDeleteModal();
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     } finally {
       setDeleting(false);
     }
@@ -1085,11 +1079,7 @@ export default function TrackingPage() {
       await loadTracked(false);
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     } finally {
       setClearingOne(false);
     }
@@ -1124,11 +1114,7 @@ export default function TrackingPage() {
       await loadTracked(false);
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     } finally {
       setClearingAll(false);
     }
@@ -1138,9 +1124,7 @@ export default function TrackingPage() {
     try {
       const res = await fetch(`/api/tracked-bosses/${id}/kill`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
 
@@ -1164,11 +1148,7 @@ export default function TrackingPage() {
       await loadTracked(false);
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     }
   }
 
@@ -1176,22 +1156,14 @@ export default function TrackingPage() {
     if (!itemToEditKill) return;
 
     if (!editKillValue) {
-      notifications.show({
-        title: "Проверь форму",
-        message: "Укажи дату и время убийства",
-        color: "yellow",
-      });
+      notifications.show({ title: "Проверь форму", message: "Укажи дату и время убийства", color: "yellow" });
       return;
     }
 
     const parsedDate = parseDateTimeLocalInTimeZone(editKillValue, timezone);
 
     if (!parsedDate) {
-      notifications.show({
-        title: "Некорректная дата",
-        message: "Не удалось распознать выбранные дату и время",
-        color: "red",
-      });
+      notifications.show({ title: "Некорректная дата", message: "Не удалось распознать выбранные дату и время", color: "red" });
       return;
     }
 
@@ -1200,12 +1172,8 @@ export default function TrackingPage() {
     try {
       const res = await fetch(`/api/tracked-bosses/${itemToEditKill.id}/kill`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          killTime: parsedDate.toISOString(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ killTime: parsedDate.toISOString() }),
       });
 
       const data = await res.json();
@@ -1229,11 +1197,7 @@ export default function TrackingPage() {
       await loadTracked(false);
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "Ошибка",
-        message: "Сетевая ошибка",
-        color: "red",
-      });
+      notifications.show({ title: "Ошибка", message: "Сетевая ошибка", color: "red" });
     } finally {
       setEditingKill(false);
     }
@@ -1244,15 +1208,12 @@ export default function TrackingPage() {
     const maxLevel = levelMaxFilter.trim() ? Number(levelMaxFilter) : null;
     const normalizedNameFilter = nameFilter.trim().toLowerCase();
 
-
     const filtered = tracked.filter((item) => {
       const liveStatus = getLiveStatus(item.respawn);
-      if (
-  normalizedNameFilter &&
-  !item.boss.name.toLowerCase().includes(normalizedNameFilter)
-) {
-  return false;
-}
+
+      if (normalizedNameFilter && !item.boss.name.toLowerCase().includes(normalizedNameFilter)) {
+        return false;
+      }
 
       if (typeFilter !== "ALL" && item.boss.bossType !== typeFilter) {
         return false;
@@ -1262,19 +1223,11 @@ export default function TrackingPage() {
         return false;
       }
 
-      if (
-        minLevel !== null &&
-        !Number.isNaN(minLevel) &&
-        item.boss.level < minLevel
-      ) {
+      if (minLevel !== null && !Number.isNaN(minLevel) && item.boss.level < minLevel) {
         return false;
       }
 
-      if (
-        maxLevel !== null &&
-        !Number.isNaN(maxLevel) &&
-        item.boss.level > maxLevel
-      ) {
+      if (maxLevel !== null && !Number.isNaN(maxLevel) && item.boss.level > maxLevel) {
         return false;
       }
 
@@ -1291,7 +1244,6 @@ export default function TrackingPage() {
             return getStatusOrder(aStatus) - getStatusOrder(bStatus);
           }
           return getTimeForSort(a) - getTimeForSort(b);
-
         case "name_asc":
           return a.boss.name.localeCompare(b.boss.name, "ru");
         case "name_desc":
@@ -1308,53 +1260,40 @@ export default function TrackingPage() {
           return 0;
       }
     });
-  }, [
-    tracked,
-    nameFilter,
-    typeFilter,
-    statusFilter,
-    levelMinFilter,
-    levelMaxFilter,
-    sortBy,
-    tick,
-  ]);
+  }, [tracked, nameFilter, typeFilter, statusFilter, levelMinFilter, levelMaxFilter, sortBy, tick]);
 
   const rows = filteredAndSortedTracked.map((item) => {
-  const status = getLiveStatus(item.respawn);
-  const countdown = getLiveCountdown(item.respawn);
+    const status = getLiveStatus(item.respawn);
+    const countdown = getLiveCountdown(item.respawn);
 
-  const adrStatusLabel = getAdrStatusLabel(item);
-  const adrStatusColor = getAdrStatusColor(item);
-  const adrCountdown = getAdrCountdown(item);
+    const adrStatusLabel = getAdrStatusLabel(item);
+    const adrStatusColor = getAdrStatusColor(item);
+    const adrCountdown = getAdrCountdown(item);
 
-  const linkIndicator = getAdrLinkIndicator(item);
+    const linkIndicator = getAdrLinkIndicator(item);
 
-  const lastKillText = formatCompactDateTime(item.lastKillAt, timezone);
-  const respawnStartText =
-    item.adrState === "RESPAWNED"
-      ? "—"
-      : formatCompactDateTime(item.respawn?.respawnStart ?? null, timezone);
-  const respawnEndText =
-    item.adrState === "RESPAWNED"
-      ? "—"
-      : formatCompactDateTime(item.respawn?.respawnEnd ?? null, timezone);
+    const lastKillText = formatCompactDateTime(item.lastKillAt, timezone);
+    const respawnStartText =
+      item.adrState === "RESPAWNED"
+        ? "—"
+        : formatCompactDateTime(item.respawn?.respawnStart ?? null, timezone);
+    const respawnEndText =
+      item.adrState === "RESPAWNED"
+        ? "—"
+        : formatCompactDateTime(item.respawn?.respawnEnd ?? null, timezone);
 
-  const statusLabel = adrStatusLabel ?? getStatusLabel(status);
-  const statusColor = adrStatusColor ?? getStatusColor(status);
-  const countdownText = adrCountdown ?? countdown;
+    const statusLabel = adrStatusLabel ?? getStatusLabel(status);
+    const statusColor = adrStatusColor ?? getStatusColor(status);
+    const countdownText = adrCountdown ?? countdown;
 
     return (
       <Table.Tr key={item.id}>
         <Table.Td>
-          <Text fw={600} size="sm">
-            {item.boss.name}
-          </Text>
+          <Text fw={600} size="sm">{item.boss.name}</Text>
         </Table.Td>
 
         <Table.Td>
-          <Text ta="center" size="sm">
-            {item.boss.level}
-          </Text>
+          <Text ta="center" size="sm">{item.boss.level}</Text>
         </Table.Td>
 
         <Table.Td>
@@ -1363,47 +1302,36 @@ export default function TrackingPage() {
             color={getBossTypeColor(item.boss.bossType)}
             variant="light"
             styles={{
-    root: {
-      fontWeight: 600,
-      letterSpacing: "1px",
-    },
-    label: {
-      opacity: 1, // 🔥 ключевой фикс
-    },
-  }}
+              root: { fontWeight: 600, letterSpacing: "1px" },
+              label: { opacity: 1 },
+            }}
           >
             {formatBossType(item.boss.bossType)}
           </Badge>
         </Table.Td>
 
         <Table.Td>
-          <Text size="sm" style={{ whiteSpace: "nowrap" }}>
-            {lastKillText}
-          </Text>
+          <Text size="sm" style={{ whiteSpace: "nowrap" }}>{lastKillText}</Text>
         </Table.Td>
 
         <Table.Td>
-          <Text size="sm" style={{ whiteSpace: "nowrap" }}>
-            {respawnStartText}
-          </Text>
+          <Text size="sm" style={{ whiteSpace: "nowrap" }}>{respawnStartText}</Text>
         </Table.Td>
 
         <Table.Td>
-          <Text size="sm" style={{ whiteSpace: "nowrap" }}>
-            {respawnEndText}
-          </Text>
+          <Text size="sm" style={{ whiteSpace: "nowrap" }}>{respawnEndText}</Text>
         </Table.Td>
 
         <Table.Td>
-          <Badge size="sm" color={statusColor} variant="light" styles={{
-    root: {
-      fontWeight: 600,
-      letterSpacing: "1px",
-    },
-    label: {
-      opacity: 1, // 🔥 ключевой фикс
-    },
-  }}>
+          <Badge
+            size="sm"
+            color={statusColor}
+            variant="light"
+            styles={{
+              root: { fontWeight: 600, letterSpacing: "1px" },
+              label: { opacity: 1 },
+            }}
+          >
             {statusLabel}
           </Badge>
         </Table.Td>
@@ -1419,9 +1347,7 @@ export default function TrackingPage() {
               borderRadius: "6px",
               background: item.adrState === "RESPAWNED" ? "#dcfad2" : getCountdownBackground(status),
               color: item.adrState === "RESPAWNED" ? "#2b6a3f" : getCountdownColor(status),
-              //border: `1px solid ${getCountdownBorder(status)}`,
-              fontFamily:
-                'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace',
               fontWeight: 600,
               fontSize: "12px",
               letterSpacing: "0.3px",
@@ -1432,39 +1358,39 @@ export default function TrackingPage() {
             {countdownText}
           </Box>
         </Table.Td>
-        <Table.Td>
-  <Group gap={6} wrap="nowrap" justify="center">
-    <Tooltip label={linkIndicator.tooltip} withArrow>
-  <ActionIcon
-    component={Link}
-    href={linkIndicator.href}
-    type="button"
-    size="md"
-    radius="sm"
-    color={linkIndicator.color}
-    variant="light"
-    aria-label={linkIndicator.tooltip}
-  >
-    <IconInfoCircle size={18} />
-  </ActionIcon>
-</Tooltip>
 
-    <Tooltip label="Удалить из ADR списка" withArrow>
-      <ActionIcon
-        type="button"
-        size="md"
-        radius="sm"
-        color="red"
-        variant="light"
-        onClick={() => removeAdrBoss(item.id, item.boss.name)}
-        aria-label="Удалить из ADR списка"
-      >
-        <IconTrash size={18} />
-      </ActionIcon>
-    </Tooltip>
-  </Group>
-</Table.Td>
-        
+        <Table.Td>
+          <Group gap={6} wrap="nowrap" justify="center">
+            <Tooltip label={linkIndicator.tooltip} withArrow>
+              <ActionIcon
+                component={Link}
+                href={linkIndicator.href}
+                type="button"
+                size="md"
+                radius="sm"
+                color={linkIndicator.color}
+                variant="light"
+                aria-label={linkIndicator.tooltip}
+              >
+                <IconInfoCircle size={18} />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="Удалить из ADR списка" withArrow>
+              <ActionIcon
+                type="button"
+                size="md"
+                radius="sm"
+                color="red"
+                variant="light"
+                onClick={() => removeAdrBoss(item.id, item.boss.name)}
+                aria-label="Удалить из ADR списка"
+              >
+                <IconTrash size={18} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        </Table.Td>
       </Table.Tr>
     );
   });
@@ -1472,13 +1398,49 @@ export default function TrackingPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
-        <Group justify="space-between" align="end">
-          <div>
-            <Title order={2}>Мониторинг рейд-боссов</Title>
-          </div>
+
+        {/* Хедер страницы с индикатором сканера */}
+        <Group justify="space-between" align="center">
+          <Title order={2}>Мониторинг рейд-боссов</Title>
+
+          <Tooltip
+            label={
+              scannerOnline === null
+                ? "Проверка статуса..."
+                : scannerOnline
+                ? "Сканирование активно"
+                : "Сканирование остановлено"
+            }
+            withArrow
+          >
+            <Paper withBorder radius="md" px="md" py="xs" style={{ cursor: "default" }}>
+              <Group gap="xs" align="center">
+                <Box
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    background:
+                      scannerOnline === null
+                        ? "#adb5bd"
+                        : scannerOnline
+                        ? "#2f9e44"
+                        : "#e03131",
+                    boxShadow: scannerOnline === true
+                      ? "0 0 6px #2f9e44"
+                      : undefined,
+                  }}
+                />
+                <Text size="sm" fw={500} c="dark">
+                  l2 boss scanner
+                </Text>
+              </Group>
+            </Paper>
+          </Tooltip>
         </Group>
 
-         <Modal
+        <Modal
           opened={editKillModalOpened}
           onClose={closeEditKillModal}
           title={<Title order={4}>Изменить время убийства</Title>}
@@ -1487,10 +1449,7 @@ export default function TrackingPage() {
           <Stack gap="md">
             <Text size="sm">
               Укажи дату и время убийства для{" "}
-              <Text span fw={700}>
-                {itemToEditKill?.boss.name ?? ""}
-              </Text>
-              .
+              <Text span fw={700}>{itemToEditKill?.boss.name ?? ""}</Text>.
             </Text>
 
             <TextInput
@@ -1503,32 +1462,20 @@ export default function TrackingPage() {
             <Paper withBorder radius="md" p="md">
               <Stack gap={6}>
                 <Group justify="space-between">
-                  <Text size="sm" c="dimmed">
-                    Текущее значение
-                  </Text>
+                  <Text size="sm" c="dimmed">Текущее значение</Text>
                   <Text size="sm" fw={600}>
                     {formatCompactDateTime(itemToEditKill?.lastKillAt ?? null, timezone)}
                   </Text>
                 </Group>
-
                 <Text size="xs" c="dimmed">
-                  После сохранения время будет пересчитано для респа и показано в таблице
-                  в том же часовом поясе.
+                  После сохранения время будет пересчитано для респа и показано в таблице в том же часовом поясе.
                 </Text>
               </Stack>
             </Paper>
 
             <Group justify="flex-end">
-              <Button
-                variant="default"
-                onClick={closeEditKillModal}
-                disabled={editingKill}
-              >
-                Отмена
-              </Button>
-              <Button onClick={saveManualKillTime} loading={editingKill}>
-                Сохранить
-              </Button>
+              <Button variant="default" onClick={closeEditKillModal} disabled={editingKill}>Отмена</Button>
+              <Button onClick={saveManualKillTime} loading={editingKill}>Сохранить</Button>
             </Group>
           </Stack>
         </Modal>
@@ -1542,9 +1489,7 @@ export default function TrackingPage() {
           <Stack gap="md">
             <Text size="sm">
               Удалить босса{" "}
-              <Text span fw={700}>
-                {itemToDelete?.boss.name ?? ""}
-              </Text>{" "}
+              <Text span fw={700}>{itemToDelete?.boss.name ?? ""}</Text>{" "}
               из мониторинга?
             </Text>
 
@@ -1552,29 +1497,16 @@ export default function TrackingPage() {
               <Paper withBorder radius="md" p="md">
                 <Stack gap="xs">
                   <Group justify="space-between">
-                    <Text size="sm" c="dimmed">
-                      Имя
-                    </Text>
-                    <Text size="sm" fw={600}>
-                      {itemToDelete.boss.name}
-                    </Text>
+                    <Text size="sm" c="dimmed">Имя</Text>
+                    <Text size="sm" fw={600}>{itemToDelete.boss.name}</Text>
                   </Group>
-
                   <Group justify="space-between">
-                    <Text size="sm" c="dimmed">
-                      Уровень
-                    </Text>
+                    <Text size="sm" c="dimmed">Уровень</Text>
                     <Text size="sm">{itemToDelete.boss.level}</Text>
                   </Group>
-
                   <Group justify="space-between">
-                    <Text size="sm" c="dimmed">
-                      Тип
-                    </Text>
-                    <Badge
-                      color={getBossTypeColor(itemToDelete.boss.bossType)}
-                      variant="light"
-                    >
+                    <Text size="sm" c="dimmed">Тип</Text>
+                    <Badge color={getBossTypeColor(itemToDelete.boss.bossType)} variant="light">
                       {formatBossType(itemToDelete.boss.bossType)}
                     </Badge>
                   </Group>
@@ -1583,20 +1515,8 @@ export default function TrackingPage() {
             )}
 
             <Group justify="flex-end">
-              <Button
-                variant="default"
-                onClick={closeDeleteModal}
-                disabled={deleting}
-              >
-                Отмена
-              </Button>
-              <Button
-                color="red"
-                onClick={confirmRemoveFromTracking}
-                loading={deleting}
-              >
-                Удалить
-              </Button>
+              <Button variant="default" onClick={closeDeleteModal} disabled={deleting}>Отмена</Button>
+              <Button color="red" onClick={confirmRemoveFromTracking} loading={deleting}>Удалить</Button>
             </Group>
           </Stack>
         </Modal>
@@ -1610,48 +1530,28 @@ export default function TrackingPage() {
           <Stack gap="md">
             <Text size="sm">
               Очистить данные босса{" "}
-              <Text span fw={700}>
-                {itemToClear?.boss.name ?? ""}
-              </Text>
-              ? После этого запись будет выглядеть так, как будто босс ещё не был
-              убит.
+              <Text span fw={700}>{itemToClear?.boss.name ?? ""}</Text>
+              ? После этого запись будет выглядеть так, как будто босс ещё не был убит.
             </Text>
 
             {itemToClear && (
               <Paper withBorder radius="md" p="md">
                 <Stack gap="xs">
                   <Group justify="space-between">
-                    <Text size="sm" c="dimmed">
-                      Имя
-                    </Text>
-                    <Text size="sm" fw={600}>
-                      {itemToClear.boss.name}
-                    </Text>
+                    <Text size="sm" c="dimmed">Имя</Text>
+                    <Text size="sm" fw={600}>{itemToClear.boss.name}</Text>
                   </Group>
-
                   <Group justify="space-between">
-                    <Text size="sm" c="dimmed">
-                      Последний килл
-                    </Text>
-                    <Text size="sm">
-                      {formatDateInTimeZone(itemToClear.lastKillAt, timezone)}
-                    </Text>
+                    <Text size="sm" c="dimmed">Последний килл</Text>
+                    <Text size="sm">{formatDateInTimeZone(itemToClear.lastKillAt, timezone)}</Text>
                   </Group>
                 </Stack>
               </Paper>
             )}
 
             <Group justify="flex-end">
-              <Button
-                variant="default"
-                onClick={closeClearOneModal}
-                disabled={clearingOne}
-              >
-                Отмена
-              </Button>
-              <Button onClick={confirmClearOne} loading={clearingOne}>
-                Очистить
-              </Button>
+              <Button variant="default" onClick={closeClearOneModal} disabled={clearingOne}>Отмена</Button>
+              <Button onClick={confirmClearOne} loading={clearingOne}>Очистить</Button>
             </Group>
           </Stack>
         </Modal>
@@ -1664,25 +1564,12 @@ export default function TrackingPage() {
         >
           <Stack gap="md">
             <Text size="sm">
-              Очистить данные по всем боссам в мониторинге? После этого все записи
-              будут выглядеть так, как будто убийства ещё не отмечались.
+              Очистить данные по всем боссам в мониторинге? После этого все записи будут выглядеть так, как будто убийства ещё не отмечались.
             </Text>
 
             <Group justify="flex-end">
-              <Button
-                variant="default"
-                onClick={closeClearAllModal}
-                disabled={clearingAll}
-              >
-                Отмена
-              </Button>
-              <Button
-                color="red"
-                onClick={confirmClearAll}
-                loading={clearingAll}
-              >
-                Очистить всё
-              </Button>
+              <Button variant="default" onClick={closeClearAllModal} disabled={clearingAll}>Отмена</Button>
+              <Button color="red" onClick={confirmClearAll} loading={clearingAll}>Очистить всё</Button>
             </Group>
           </Stack>
         </Modal>
@@ -1692,9 +1579,7 @@ export default function TrackingPage() {
           onClose={closeAccountModal}
           title={
             <Title order={4}>
-              {selectedBossForAccount
-                ? `Аккаунт: ${selectedBossForAccount.name}`
-                : "Аккаунт"}
+              {selectedBossForAccount ? `Аккаунт: ${selectedBossForAccount.name}` : "Аккаунт"}
             </Title>
           }
           centered
@@ -1704,9 +1589,7 @@ export default function TrackingPage() {
             <Paper withBorder radius="md" p="lg">
               <Group>
                 <Loader size="sm" />
-                <Text size="sm" c="dimmed">
-                  Загрузка аккаунта...
-                </Text>
+                <Text size="sm" c="dimmed">Загрузка аккаунта...</Text>
               </Group>
             </Paper>
           ) : (
@@ -1715,45 +1598,31 @@ export default function TrackingPage() {
                 label="Ник персонажа"
                 placeholder="Например, SpoilerMain"
                 value={accountForm.characterName}
-                onChange={(e) =>
-                  updateAccountForm("characterName", e.currentTarget.value)
-                }
+                onChange={(e) => updateAccountForm("characterName", e.currentTarget.value)}
               />
-
               <TextInput
                 label="Логин"
                 placeholder="Введите логин"
                 value={accountForm.login}
                 onChange={(e) => updateAccountForm("login", e.currentTarget.value)}
               />
-
               <TextInput
                 label="Пароль"
                 placeholder="Введите пароль"
                 value={accountForm.password}
-                onChange={(e) =>
-                  updateAccountForm("password", e.currentTarget.value)
-                }
+                onChange={(e) => updateAccountForm("password", e.currentTarget.value)}
               />
 
               <Group justify="space-between">
                 <Group>
                   {existingAccount && (
-                    <Button
-                      color="red"
-                      variant="light"
-                      onClick={deleteAccount}
-                      loading={accountDeleting}
-                    >
+                    <Button color="red" variant="light" onClick={deleteAccount} loading={accountDeleting}>
                       Удалить аккаунт
                     </Button>
                   )}
                 </Group>
-
                 <Group>
-                  <Button variant="default" onClick={closeAccountModal}>
-                    Закрыть
-                  </Button>
+                  <Button variant="default" onClick={closeAccountModal}>Закрыть</Button>
                   <Button onClick={saveAccount} loading={accountSaving}>
                     {existingAccount ? "Сохранить изменения" : "Создать аккаунт"}
                   </Button>
@@ -1766,32 +1635,32 @@ export default function TrackingPage() {
         <Card withBorder radius="md" p="lg">
           <Stack gap="md">
             <Group justify="space-between" align="center">
-  <div>
-    <Title order={4}>Список отслеживания</Title>
-    <Text size="sm" c="dimmed">
-      Таймеры обновляются автоматически каждую секунду
-    </Text>
-  </div>
+              <div>
+                <Title order={4}>Список отслеживания</Title>
+                <Text size="sm" c="dimmed">
+                  Таймеры обновляются автоматически каждую секунду
+                </Text>
+              </div>
 
-  <Group gap="sm" align="center">
-    <TextInput
-      placeholder="Поиск по имени босса"
-      value={nameFilter}
-      onChange={(e) => setNameFilter(e.currentTarget.value)}
-      w={270}
-    />
+              <Group gap="sm" align="center">
+                <TextInput
+                  placeholder="Поиск по имени босса"
+                  value={nameFilter}
+                  onChange={(e) => setNameFilter(e.currentTarget.value)}
+                  w={270}
+                />
 
-    <Button
-      variant={filtersOpened ? "filled" : "default"}
-      onClick={() => setFiltersOpened(!filtersOpened)}
-    >
-      {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
-    </Button>
-    <Button variant="default" onClick={resetFilters}>
-      Сбросить фильтры
-    </Button>
-  </Group>
-</Group>
+                <Button
+                  variant={filtersOpened ? "filled" : "default"}
+                  onClick={() => setFiltersOpened(!filtersOpened)}
+                >
+                  {filtersOpened ? "Скрыть фильтры" : "Показать фильтры"}
+                </Button>
+                <Button variant="default" onClick={resetFilters}>
+                  Сбросить фильтры
+                </Button>
+              </Group>
+            </Group>
 
             {filtersOpened && (
               <Paper withBorder radius="md" p="md">
@@ -1801,10 +1670,7 @@ export default function TrackingPage() {
                       label="Тип"
                       value={typeFilter}
                       onChange={(value) =>
-                        value &&
-                        setTypeFilter(
-                          value as "ALL" | TrackedBossItem["boss"]["bossType"]
-                        )
+                        value && setTypeFilter(value as "ALL" | TrackedBossItem["boss"]["bossType"])
                       }
                       data={[
                         { value: "ALL", label: "Все типы" },
@@ -1847,9 +1713,7 @@ export default function TrackingPage() {
                     <Select
                       label="Сортировка"
                       value={sortBy}
-                      onChange={(value) =>
-                        value && setSortBy(value as TrackingSort)
-                      }
+                      onChange={(value) => value && setSortBy(value as TrackingSort)}
                       data={[
                         { value: "status", label: "По статусу" },
                         { value: "timer_asc", label: "Таймер ↑" },
@@ -1875,15 +1739,12 @@ export default function TrackingPage() {
               <Paper withBorder radius="md" p="lg">
                 <Group>
                   <Loader size="sm" />
-                  <Text size="sm" c="dimmed">
-                    Загрузка...
-                  </Text>
+                  <Text size="sm" c="dimmed">Загрузка...</Text>
                 </Group>
               </Paper>
             ) : filteredAndSortedTracked.length === 0 ? (
               <Alert variant="light" color="gray" title="Ничего не найдено">
-                По текущим фильтрам ничего не найдено. Измени фильтры или добавь
-                босса в мониторинг.
+                По текущим фильтрам ничего не найдено. Измени фильтры или добавь босса в мониторинг.
               </Alert>
             ) : (
               <ScrollArea>
@@ -1894,58 +1755,36 @@ export default function TrackingPage() {
                   withColumnBorders
                   horizontalSpacing="sm"
                   verticalSpacing="xs"
-                  style={{
-                    tableLayout: "auto",
-                    fontSize: "13px",
-                    width: "100%",
-                  }}
+                  style={{ tableLayout: "auto", fontSize: "13px", width: "100%" }}
                 >
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th style={{ width: "30%" }}>
-                        <Text size="sm" fw={600}>
-                          Босс
-                        </Text>
+                        <Text size="sm" fw={600}>Босс</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "4%" }}>
-                        <Text size="sm" fw={600}>
-                          LVL
-                        </Text>
+                        <Text size="sm" fw={600}>LVL</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "13%" }}>
-                        <Text size="sm" fw={600}>
-                          Тип
-                        </Text>
+                        <Text size="sm" fw={600}>Тип</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "8%" }}>
-                        <Text size="sm" fw={600}>
-                          Килл
-                        </Text>
+                        <Text size="sm" fw={600}>Килл</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "8%" }}>
-                        <Text size="sm" fw={600}>
-                          Старт
-                        </Text>
+                        <Text size="sm" fw={600}>Старт</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "8%" }}>
-                        <Text size="sm" fw={600}>
-                          Конец
-                        </Text>
+                        <Text size="sm" fw={600}>Конец</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "13%" }}>
-                        <Text size="sm" fw={600}>
-                          Статус
-                        </Text>
+                        <Text size="sm" fw={600}>Статус</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "8%" }}>
-                        <Text size="sm" fw={600}>
-                          Таймер
-                        </Text>
+                        <Text size="sm" fw={600}>Таймер</Text>
                       </Table.Th>
                       <Table.Th style={{ width: "14%" }}>
-                        <Text size="sm" fw={600}>
-                          Действия
-                        </Text>
+                        <Text size="sm" fw={600}>Действия</Text>
                       </Table.Th>
                     </Table.Tr>
                   </Table.Thead>

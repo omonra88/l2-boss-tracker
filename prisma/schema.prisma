@@ -60,6 +60,7 @@ model Settings {
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
   soundNotificationMode SoundNotificationMode @default(NONE)
+  scannerOnline         Boolean               @default(false)
 }
 
 model BossTypeSetting {
